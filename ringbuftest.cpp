@@ -7,6 +7,10 @@
 
 #include <boost/circular_buffer.hpp>
 #include <iostream>
+#include <thread>
+#include <vector>
+
+#include "bounded_circular_buffer.hpp"
 
 template<typename sample_type, int ncollection=480, int ninduction=800>
 struct Tick {
@@ -15,29 +19,83 @@ struct Tick {
 };
 
 
+//typedef Tick<short> tick_type;
+//typedef std::shared_ptr<tick_type> tick_ptr;
+//typedef boost::circular_buffer<tick_ptr> ring_type;
+typedef int tick_type;
+//typedef boost::circular_buffer<tick_type> ring_type;
+typedef bounded_buffer<tick_type> ring_type;
+
+const int bail = 10000000;
+
+struct Filler {
+    ring_type& ring;
+    int count;
+    Filler(ring_type& ring) : ring(ring), count(0) { }
+    void operator()() {
+        while (true) {
+            // if (ring.full()) {
+            //     //std::cerr << "f";
+            //     continue;
+            // }
+            //ring.push_back(std::make_shared<tick_type>());
+            //std::cerr << '+' << count << std::endl;
+            ring.push_front(count);
+            ++count;
+            if (count == bail) {
+                std::cerr << "Filler bail with\n";
+                return;
+            }
+            continue;
+        }
+    }
+};
+
+struct Drainer {
+    ring_type& ring;
+    int count;
+    Drainer(ring_type& ring) : ring(ring), count(0) { }
+    void operator()() {
+        while (true) {
+            // if (ring.empty()) {
+            //     //std::cerr << "e";
+            //     continue;
+            // }
+            //std::cerr << '-' << count << std::endl;
+            tick_type tick;
+            ring.pop_back(&tick);
+            ++count;
+            if (count == bail) {
+                std::cerr << "Drainer bail with\n";
+                return;
+            }
+            continue;
+        }
+    }
+};
+
 int main()
 {
-    typedef Tick<short> tick_type;
-    typedef std::shared_ptr<tick_type> tick_ptr;
-
-    const int bufsize = 10;
-    typedef boost::circular_buffer<tick_ptr> ring_type;
+    const int bufsize = 100;
     
     ring_type ring(bufsize);
-    std::cerr << ring.size() << std::endl;
 
-    ring.push_back(std::make_shared<tick_type>());
-    ring.push_back(std::make_shared<tick_type>());
+    std::vector<std::thread> threads;
 
-    std::cerr << "size=" << ring.size()
-              << " reserve=" << ring.reserve()
-              << " capacity=" << ring.capacity()
-              << " max_size=" << ring.max_size()
-              << " empty=" << ring.empty()
-              << " full=" << ring.full()
-              << std::endl;
-    auto one = ring.front();
-    one->samples[0] = 0;
+    threads.push_back(std::thread(Filler(ring)));
+    threads.push_back(std::thread(Drainer(ring)));
+
+    for (auto& th : threads) {
+        th.join();
+    }
+
+    // std::cerr << "size=" << ring.size()
+    //           << " reserve=" << ring.reserve()
+    //           << " capacity=" << ring.capacity()
+    //           << " max_size=" << ring.max_size()
+    //           << " empty=" << ring.empty()
+    //           << " full=" << ring.full()
+    //           << std::endl;
 
     return 0;
 }
