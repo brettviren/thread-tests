@@ -1,0 +1,64 @@
+digraph detail {
+        node[group=ext,shape=box];
+        
+        hw[shape=house,label="hardware\ndevice"];
+        in[shape=invhouse,label="input"];
+        
+        hw->in[penwidth=10, label="  read\n   10 GB/s"];
+        
+        mon[shape=octagon,color="red"];
+        ring[shape=circle,label="circular\nbuffer",color="blue",penwidth=4];
+        
+        readout[label="Readout",group=trig];
+        mt[label="SP 10kton\nModule\nTrigger"];
+        tr[label="APA Trigger\nReceiver\ncollate",group=trig]
+        pd[label="Primitive\nDispatcher",group=trig]
+        further[label="Further\nProcessing"];
+        ssd[label="fast, temp\nstorage"]
+        artdaq[label="artDAQ"];
+        
+        node[group=flow,shape=box];
+        gw[label="chunk\ndispatch"];
+        tp1[label="trigger\nprocessor\nfor plane1",shape="diamond"];
+        tp2[label="trigger\nprocessor\nfor plane2",shape="diamond"];
+        collector[label="collect planes\norder by ts"];
+
+
+        {rank=same; readout->tr->pd[style=invis]}
+        {rank=same; in, gw}
+        {rank=same; ssd, artdaq}
+        {rank=same; mon, ring}
+
+
+        in->ring[label="push\n ts,vec",penwidth=10];
+        ring->in[label="return\ncvec",style=dashed];
+        in->gw[label="ts,W1cvec,W2cvec (2x2GB/s)",constraint=false,penwidth=4];
+        gw->tp1[label="p1:ts,\nW1cvec"];
+        gw->tp2[label="p2:ts,\nW2cvec"];
+        
+        in->mon[label="Ring\nFull",fontcolor=red,color=red,style=dashed];
+        
+        tp1->collector[label="p1:\n ts,tcat"];
+        tp2->collector[label="p2:\nts,tcat"];
+        
+        collector->pd[label=" [ts1,ts2]\n+rcat",color=purple,constraint=false];
+        pd->tr[color=purple,label="[ts1,ts2]+rcat"];
+        pd->mt[color=purple,label="[ts1,ts2]+rcat"];
+        readout->ring[label=" drop(ts1,ts2)",style=dashed];
+        ring->readout[label="read(ts1,ts2)",penwidth=2];
+                
+        mt->tr[label=" [ts1,ts2]\n+rcat",color=purple];
+        tr->readout[label="[ts1,ts2]+cmd\n(proc, dump or drop)",color=purple,constraint=false];
+        
+        readout->further[label="[ts1,ts2]+cmd",penwidth=2];
+        readout->mon[label="Ring\nMiss",style=dashed,fontcolor=red,color=red];
+
+        further->ssd[label="dump",penwidth=2];
+        further->artdaq[label="proc",penwidth=2];
+        ssd->artdaq[label="trickle out"];
+
+        node[shape=record, group=leg]
+        legend[label="{Legend|ts: ns timestamp with year range\l|rcat: range category\l|tcat: tick category\l|cmd: dispatch command\l|vec: full tick vector (2560 ch)\l|cvec: col. plane vec ptr into ring\l}"];
+
+
+}

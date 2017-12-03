@@ -1,0 +1,56 @@
+digraph proc {
+	node[shape=box];
+	snb[label="SNB storage\nfast but rare"];
+	subgraph cluster_host {
+		felix[label="FELIX",penwidth=2];
+		subgraph cluster_tier1 {
+			apa[label="data stream\nproducer\nthread",shape=Msquare];
+			proc1[label="NOT noise\ntrigger\nthread\nplane 1",shape=Msquare,penwidth=4];
+			proc2[label="NOT noise\ntrigger\nthread\nplane 2",shape=Msquare,penwidth=4];
+			readout[label="readout\nconsumer\nthread",shape=Msquare,penwidth=2];
+			ring[label="bounded\nthread safe\nshared memory\ncircular buffer\n(1-10 s)",shape=circle,color=blue,penwidth=6];
+			{rank=same;proc1, proc2,readout}
+			label="Tier 1 MT, SHMEM process";
+			color=blueviolet;
+			penwidth=2;
+		}
+		label="Tier 1 host computer";
+		color=blueviolet;
+	}
+	other[label="other Tier 1\nprocesses\nx149 SP",penwidth=2,color=blueviolet];
+	beam[label="FNAL beam\nmonitoring\nprocess",penwidth=2];
+	gtl[label="Global\nTrigger\nLogic",color=darkgreen,shape=doubleoctagon];
+	dpmtl[label="Dual-phase\nmodule\ntrigger logic",shape=octagon,color=darkgreen,penwidth=2];
+	
+	trigger[label="Single-phase\nmodule\ntrigger Logic", shape=octagon,color=darkgreen,penwidth=2];
+	{rank=same;other, trigger}
+	{rank=same;beam, gtl}
+	{rank=same;snb, output}
+
+	monitor[label="DAQ\nmonitor\nsystem",shape=pentagon,color=red,penwidth=2];
+	output[label="Tier 2 processes\nsave to output\nor into to artDAQ?", color=darkorchid,penwidth=2];
+
+	felix->apa[penwidth=6,constraint=false,label="read device file"];
+	apa->ring[label=" push buffer\n 10 GB/s\n",penwidth=6];
+	apa->monitor[label="warn if full",style=dotted,color=red,constraint=false];
+	ring->readout[label="pop buffer\nMB/s - GB/s\n10 GB/s if SNB",penwidth=4];
+	ring->proc1[label=" read buffer\n2 x 2 GB/s",penwidth=3];
+	ring->proc2[penwidth=3];
+	proc1->trigger[style=dotted,color=darkgreen];
+	proc2->trigger[label="trigger\n primitives",style=dotted,color=darkgreen];
+	proc1->readout[style=dotted,color=green2];
+	proc2->readout[label="fast local trigger\nhigh energy thresh",style=dotted,color=green2];
+	readout->trigger[label="global\ntrigger",dir=back,style=dotted,color=green2];
+	monitor->readout[label="warn if miss",style=dotted,color=red,dir=back];
+	readout->output[label="send triggered\n MB/s - GB/s",penwidth=3,style=dashed];
+	readout->snb[penwidth=6,style=dashed,label=" stream"];
+	snb->output[style=dashed,label="trickle out"];
+	other->trigger[label="trigger primitives",style=dotted,color=darkgreen];
+	trigger->other[label="global trigger",style=dotted,color=green2];
+	other->beam[style=invis];
+	gtl->trigger[style=dotted,color=green2];
+	trigger->gtl[style=dotted,color=darkgreen];
+	beam->gtl[label="beam trigger\npacket",style=dotted,color=darkgreen];
+	gtl->dpmtl[style=dotted,color=green2];
+	dpmtl->gtl[style=dotted,color=darkgreen];
+}
