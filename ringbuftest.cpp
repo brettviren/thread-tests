@@ -6,6 +6,7 @@
  */
 
 #include <boost/circular_buffer.hpp>
+#include <boost/timer/timer.hpp>
 #include <iostream>
 #include <thread>
 #include <vector>
@@ -76,6 +77,8 @@ struct Drainer {
 
 int main()
 {
+    boost::timer::auto_cpu_timer timer;
+
     const int bufsize = 100;
     
     ring_type ring(bufsize);
