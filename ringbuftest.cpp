@@ -77,11 +77,12 @@ struct Drainer {
 
 int main()
 {
-    boost::timer::auto_cpu_timer timer;
 
     const int bufsize = 100;
     
     ring_type ring(bufsize);
+
+    boost::timer::auto_cpu_timer timer;
 
     std::vector<std::thread> threads;
 
