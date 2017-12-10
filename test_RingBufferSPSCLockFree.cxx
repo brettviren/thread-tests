@@ -5,14 +5,16 @@
 
 
 #include "RingBufferSPSCLockFree.h"
+#include "RingBufferSPSCLockFree2.h"
 #include <boost/timer/timer.hpp>
 #include <thread>
 
-int main (int argc, char** argv)
+template<typename buffertype>
+void test_rb()
 {
-    const int bufsize = 100;
-    const int nelements = 10000000;
-    RingBufferSPSCLockFree<int> queue(bufsize);
+    const int bufsize = 2<<20;
+    const int nelements = 100000000;
+    buffertype queue(bufsize);
 
     boost::timer::auto_cpu_timer timer;
 
@@ -32,5 +34,11 @@ int main (int argc, char** argv)
     write_thread.join();
     read_thread.join();
      
+}
+
+int main (int argc, char** argv) {
+    test_rb< RingBufferSPSCLockFree2<int> >();
+    test_rb< RingBufferSPSCLockFree<int> >();
+
     return 0;
 }
