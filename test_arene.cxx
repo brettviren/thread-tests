@@ -6,11 +6,13 @@
 int main()
 {
     const int bufsize = 2<<20;
-    const int width = 2560;
+    const int width = 1024; // 2560;
 
     // 1e8 elements and no ptr memory access 0.45s
     // 1e6 and simple enumerated filling of ptr: 1.5s.
-    // 1e6 and memcopy in/out: 2.5 s
+    // 1e6 and memcopy of 1024 in/out: .77 s
+    // 1e6 and memcopy of 2560 in/out: 2.5 s
+    // 1e6 and memcopy of 4096 in/out: 4.1 s
     const int nelements = 1000000;
 
     typedef arene::BlockBuffer<short> buffer_type;
@@ -45,3 +47,16 @@ int main()
     read_thread.join();
     return 0;
 }
+
+
+/* notes;
+
+   hal laptop has 64bit 1600 MHz DDR3 with theoretical transfer rate
+   of 12.8 GB/s.
+
+   with 1e6 memcpy's of 1024 shorts in .77 s that's 2.6GB/s.  There's
+   also outcopy happening at the same time so 5.3GB/s transfer.  Not
+   quite half theoretical.  At width=4096 this is 4GB/s
+
+
+ */
