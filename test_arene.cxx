@@ -6,7 +6,7 @@
 int main()
 {
     const int bufsize = 2<<20;
-    const int width = 1024; // 2560;
+    const int width = 4096; // 2560;
 
     // 1e8 elements and no ptr memory access 0.45s
     // 1e6 and simple enumerated filling of ptr: 1.5s.

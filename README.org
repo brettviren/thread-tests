@@ -2,3 +2,60 @@
 
 Just some STD C++, BOOST and TBB tests for learning and basic benchmarking.
 
+* Some numbers
+
+An implementation, in some state of development, of a thread safe
+circular aka ring buffer is in [[./arene.h]].  A test is in
+[[./test_arene.cxx]] but it's changing as I make notes in the next sections.
+
+- hal :: Ubuntu 17.04, thinkpad T520, 16GB DDR3 1600 (12 GB/s theoretical max), i5-2520M 2.5GHz
+- haiku :: Ubuntu 16.04, desktop, 16 GB DDR3 1333 (10.7 GB/s max), 17-4770k 3.5GHz
+
+Compilation on hal
+
+#+BEGIN_EXAMPLE
+$ clang++ -O3 -std=c++14  -I. -o test_arene test_arene.cxx -lboost_timer -lpthread
+
+#+END_EXAMPLE
+
+** Basics ring function
+
+The basic test has two threads, one pushing and the other popping the
+ring buffer.  The data type for one element is simply an integer.
+Depth is 2^20 and 1e8 ops are done to get a run time of around a
+second or more.
+
+- going from =std::mutex= to =std::atomic= based ring buffer is a 13x speedup
+- going from =%= to requiring the buffer to have a length which is a power-of-two so that a bit mask can be used to implement ring wrap-around gives another factor of 2x speedup.
+- using 32 bit =unsigned int= for buffer indices gives a 10-20% speed increase compared to 64 bit =size_t=.  However, 32 bits will overflow in a bit more than a half hour at 2MHz.  64bit will be effectively infinite.  Handling 32 overflow will require a different design w.r.t. thread safety.
+
+** Memory
+
+The ring buffer's element type is changed from =int= to an array of
+=short= where the array is created on the heap in a contiguous block
+of =width*depth=.  Width is chosen to be something like 2560 for
+exactly holding one APA but others are tested.  Depth is same.  Number
+of ops are chosen so the test run time is around a second or more.
+
+- Performing no memory operations speeds up the test somewhat compared to pushing ints.
+
+- Adding a =std::memcpy= on =push()= and =pop()= slows running down by about a factor of 100 compared to no-op running.
+
+| host  | comp  | length | time(2) | throughput |
+|-------+-------+--------+---------+------------|
+| hal   | clang |   1024 |    0.77 | 5.3 GB/s   |
+| hal   | clang |   4096 |     4.4 | 3.7 GB/s   |
+| hal   | gcc   |   4096 |     4.3 | 4.8 GB/s   |
+|-------+-------+--------+---------+------------|
+| haiku | clang |   1024 |     2.8 | 1.5 GB/s   |
+| haiku | clang |   4096 |     8.5 | 1.9 GB/s   |
+| haiku | gcc   |   4096 |     8.5 | 1.9 GB/s   |
+
+Some outliers took 50% longer.  Throughput is calculated by counting
+both push and pop copies so should be compared to 20 GB/s goal, not the direct 10 GB/s coming out of one APA.
+
+#+BEGIN_EXAMPLE
+You have: 2*4098 * 2B * 1e6 / 4.4s
+You want: GB/s
+	* 3.7254545
+#+END_EXAMPLE 
