@@ -89,8 +89,13 @@ private:
         return (n + 1);
     }
 
-    std::atomic<int> m_write;
-    std::atomic<int> m_read;
+    // Using "int" for indices is slightly faster than size_t.  The
+    // app will not likely need 32 bits of buffer indexing as that
+    // would correspond to 22 TB / APA.  Using unsigned int is about
+    // 10-20% faster than using signed int.
+
+    std::atomic<unsigned int> m_write;   // current head buffer index
+    std::atomic<unsigned int> m_read;    // current tail buffer index
     std::size_t m_mask;
     std::size_t m_capacity;
 
