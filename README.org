@@ -10,13 +10,15 @@ circular aka ring buffer is in [[./arene.h]].  A test is in
 
 - hal :: Ubuntu 17.04, thinkpad T520, 16GB DDR3 1600 (12 GB/s theoretical max), i5-2520M 2.5GHz
 - haiku :: Ubuntu 16.04, desktop, 16 GB DDR3 1333 (10.7 GB/s max), 17-4770k 3.5GHz
+- hierocles :: Ubuntu 16.04, desktop, 64 GB DDR4 ECC REG 2400 at 2133 MHz (21-23 GB/s), Xeon E5-2630 2.2GHz
 
-Compilation on hal
+Compilation:
 
 #+BEGIN_EXAMPLE
 $ clang++ -O3 -std=c++14  -I. -o test_arene test_arene.cxx -lboost_timer -lpthread
-
 #+END_EXAMPLE
+
+Same for =g++= but Boost on Ubuntu 16.04 needs =-lboost_system= added.
 
 ** Basics ring function
 
@@ -41,21 +43,37 @@ of ops are chosen so the test run time is around a second or more.
 
 - Adding a =std::memcpy= on =push()= and =pop()= slows running down by about a factor of 100 compared to no-op running.
 
-| host  | comp  | length | time(2) | throughput |
-|-------+-------+--------+---------+------------|
-| hal   | clang |   1024 |    0.77 | 5.3 GB/s   |
-| hal   | clang |   4096 |     4.4 | 3.7 GB/s   |
-| hal   | gcc   |   4096 |     4.3 | 4.8 GB/s   |
-|-------+-------+--------+---------+------------|
-| haiku | clang |   1024 |     2.8 | 1.5 GB/s   |
-| haiku | clang |   4096 |     8.5 | 1.9 GB/s   |
-| haiku | gcc   |   4096 |     8.5 | 1.9 GB/s   |
+Some measurements on different hosts, compilers, and widths (#channels).
 
-Some outliers took 50% longer.  Throughput is calculated by counting
-both push and pop copies so should be compared to 20 GB/s goal, not the direct 10 GB/s coming out of one APA.
+|-----------+-------+-------+------+------------|
+| host      | comp  | width | time | throughput |
+|           |       |       |  (s) |     (GB/s) |
+|-----------+-------+-------+------+------------|
+| hal       | clang |  1024 | 0.77 |        5.3 |
+| hal       | clang |  4096 |  4.4 |        3.7 |
+| hal       | gcc   |  4096 |  4.3 |        4.8 |
+|-----------+-------+-------+------+------------|
+| haiku     | clang |  1024 |  2.8 |        1.5 |
+| haiku     | clang |  4096 |  8.5 |        1.9 |
+| haiku     | gcc   |  4096 |  8.5 |        1.9 |
+|-----------+-------+-------+------+------------|
+| hierocles | clang |  4096 |  4.5 |        3.6 |
+| hierocles | clang |  4096 |  2.5 |        6.5 |
+|-----------+-------+-------+------+------------|
+
+
+Some outliers took 50-200% longer.  Seems after "warming up" it's
+consistently lower.
+
+Throughput is calculated by counting both push and pop copies, eg:
 
 #+BEGIN_EXAMPLE
 You have: 2*4098 * 2B * 1e6 / 4.4s
 You want: GB/s
 	* 3.7254545
 #+END_EXAMPLE 
+
+To compare them to the goal of handling the 10 GB/s coming out of one
+APA these numbers must be *halved*.  But, they can be compared to the
+theoretical max.
+
