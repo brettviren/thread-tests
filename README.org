@@ -8,9 +8,9 @@ An implementation, in some state of development, of a thread safe
 circular aka ring buffer is in [[./arene.h]].  A test is in
 [[./test_arene.cxx]] but it's changing as I make notes in the next sections.
 
-- hal :: Ubuntu 17.04, thinkpad T520, 16GB DDR3 1600 (12 GB/s theoretical max), i5-2520M 2.5GHz
-- haiku :: Ubuntu 16.04, desktop, 16 GB DDR3 1333 (10.7 GB/s max), 17-4770k 3.5GHz
-- hierocles :: Ubuntu 16.04, desktop, 64 GB DDR4 ECC REG 2400 at 2133 MHz (21-23 GB/s), Xeon E5-2630 2.2GHz
+- hal :: Ubuntu 17.04, thinkpad T520, 16GB DDR3 1600 (12 GB/s theoretical max), i5-2520M 2.5GHz. Cache: 64kB/256kB/3072kB.
+- haiku :: Ubuntu 16.04, desktop, 16 GB DDR3 1333 (10.7 GB/s max), 17-4770k 3.5GHz.  Cache: 256kB/1024kB/8192kB.
+- hierocles :: Ubuntu 16.04, desktop, 64 GB DDR4 ECC REG 2400 at 2133 MHz (21-23 GB/s), Xeon E5-2630 2.2GHz. Cache: 640kB/2560kB/25600kB.
 
 Compilation:
 
@@ -75,5 +75,7 @@ You want: GB/s
 
 To compare them to the goal of handling the 10 GB/s coming out of one
 APA these numbers must be *halved*.  But, they can be compared to the
-theoretical max.
+theoretical max.  Given these numbers and the three host CPU and RAM
+specs it's hard to fully account for these different time
+measurements.  The test jobs are pegged at 200% CPU.
 
