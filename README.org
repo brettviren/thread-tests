@@ -63,9 +63,23 @@ Some measurements on different hosts, compilers, and widths (#channels).
 
 
 Some outliers took 50-200% longer.  Seems after "warming up" it's
-consistently lower.
+consistently lower.  Reduce buffer to 2^18 to keep it fitting into 16
+GB RAM and not swap and increase to 1e8 elements so it will run a bit
+longer to reach steady state.
 
-Throughput is calculated by counting both push and pop copies, eg:
+
+|-----------+-------+-------+-------+------------|
+| host      | comp  | width |  time | throughput |
+|           |       |       |   (s) |     (GB/s) |
+|-----------+-------+-------+-------+------------|
+| hal       | clang |  4096 |  93.7 |       17.5 |
+| hal       | clang |  4096 | 112.3 |       14.6 |
+| haiku     | clang |  4096 |  54.0 |       30.4 |
+| hierocles | clang |  4096 | 205.4 |        8.0 |
+|-----------+-------+-------+-------+------------|
+
+This is a bit more in keeping with CPU speed.  The throughput here is
+calculated by counting both push and pop copies, eg:
 
 #+BEGIN_EXAMPLE
 You have: 2*4098 * 2B * 1e6 / 4.4s

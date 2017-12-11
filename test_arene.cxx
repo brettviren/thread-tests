@@ -1,11 +1,11 @@
 #include "arene.h"
 #include <boost/timer/timer.hpp>
 #include <thread>
-
+#include <iostream>
 
 int main()
 {
-    const int bufsize = 2<<20;
+    const int bufsize = 2<<18;
     const int width = 4096; // 2560;
 
     // 1e8 elements and no ptr memory access 0.45s
@@ -13,7 +13,7 @@ int main()
     // 1e6 and memcopy of 1024 in/out: .77 s
     // 1e6 and memcopy of 2560 in/out: 2.5 s
     // 1e6 and memcopy of 4096 in/out: 4.1 s
-    const int nelements = 1000000;
+    const int nelements = 100000000;
 
     typedef arene::BlockBuffer<short> buffer_type;
     buffer_type queue(width, bufsize);
@@ -28,7 +28,12 @@ int main()
     buffer_type::element_type* junk2ptr = &junk2[0];
 
     std::thread write_thread( [&] () {
+            int expo = 2;
             for(int i = 0; i<nelements; i++) {
+                if (i&expo) {
+                    expo *= 2;
+                    std::cerr << "w: " << i << std::endl;
+                }
                 buffer_type::element_type* ptr=nullptr;
                 queue.push(ptr);
                 std::memcpy(ptr, junk,
@@ -38,8 +43,7 @@ int main()
 
     std::thread read_thread( [&] () {
             for(int i = 0; i<nelements; i++) {
-                queue.pop(&junk2ptr);
-                
+                queue.pop(&junk2ptr);                
             }
         });
 
