@@ -46,10 +46,10 @@ int main (int argc, char** argv) {
     std::cout << "with mutex\n";
     test_rb< bounded_buffer<int> >();
 
-    std::cout << "with atomic + bitmask\n";
+    std::cout << "with atomic + modulo\n";
     test_rb< RingBufferSPSCLockFree<int> >();
 
-    std::cout << "with atomic + modulo\n";
+    std::cout << "with atomic + bitmask\n";
     test_rb< RingBufferSPSCLockFree2<int> >();
 
     return 0;

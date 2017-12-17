@@ -10,8 +10,8 @@ circular aka ring buffer is in [[./arene.h]].  A test is in
 
 - hal :: Ubuntu 17.04, thinkpad T520, 16GB DDR3 1600 (12 GB/s theoretical max), i5-2520M 2.5GHz. Cache: 64kB/256kB/3072kB.
 - haiku :: Ubuntu 16.04, desktop, 16 GB DDR3 1333 (10.7 GB/s max), 17-4770k 3.5GHz.  Cache: 256kB/1024kB/8192kB.
-- hierocles :: Ubuntu 16.04, desktop, 64 GB DDR4 ECC REG 2400 at 2133 MHz (21-23 GB/s), Xeon E5-2630 2.2GHz. Cache: 640kB/2560kB/25600kB.
-- hothstor2 :: Ubuntu 16.04, desktop, 32 GB DDR4 2400, i7-7700K 4.2 GHz, 256kB/1024kB/8192kB.
+- hierocles :: Ubuntu 16.04, desktop, 64 GB DDR4 ECC REG 2400 at 2133 MHz (17-19 GB/s), Xeon E5-2630 2.2GHz. Cache: 640kB/2560kB/25600kB.
+- hothstor2 :: Ubuntu 16.04, desktop, 32 GB DDR4 2400 (19 GB/s), i7-7700K 4.2 GHz, 256kB/1024kB/8192kB.
 
 Compilation:
 
