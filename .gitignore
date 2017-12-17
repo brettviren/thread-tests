@@ -1,1 +1,6 @@
 *~
+.waf*
+.lock-waf*
+build
+*.pyc
+venv*

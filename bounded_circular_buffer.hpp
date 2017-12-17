@@ -18,7 +18,7 @@ public:
 
     explicit bounded_buffer(size_type capacity) : m_unread(0), m_container(capacity) {}
 
-    void push_front(param_type item) {
+    void push(param_type item) {
         std::unique_lock<std::mutex> lock(m_mutex);
         m_not_full.wait(lock, std::bind(&bounded_buffer<value_type>::is_not_full, this));
         m_container.push_front(item);
@@ -27,7 +27,17 @@ public:
         m_not_empty.notify_one();
     }
 
-    void pop_back(value_type* pItem) {
+
+    value_type pop() {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_not_empty.wait(lock, std::bind(&bounded_buffer<value_type>::is_not_empty, this));
+        value_type item = m_container[--m_unread];
+        lock.unlock();
+        m_not_full.notify_one();
+        return item;
+    }
+
+    void pop_save(value_type* pItem) {
         std::unique_lock<std::mutex> lock(m_mutex);
         m_not_empty.wait(lock, std::bind(&bounded_buffer<value_type>::is_not_empty, this));
         *pItem = m_container[--m_unread];

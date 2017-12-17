@@ -5,7 +5,8 @@
 
 int main()
 {
-    const int bufsize = 2<<18;
+    const int nbits = 18;
+    const int bufsize = 2<<nbits;
     const int width = 4096; // 2560;
 
     // 1e8 elements and no ptr memory access 0.45s
@@ -14,6 +15,10 @@ int main()
     // 1e6 and memcopy of 2560 in/out: 2.5 s
     // 1e6 and memcopy of 4096 in/out: 4.1 s
     const int nelements = 100000000;
+    std::cout << "bufsize: 2^" << nbits
+              << " width=" << width
+              << " nelements=" << nelements
+              << std::endl;
 
     typedef arene::BlockBuffer<short> buffer_type;
     buffer_type queue(width, bufsize);
@@ -32,7 +37,7 @@ int main()
             for(int i = 0; i<nelements; i++) {
                 if (i&expo) {
                     expo *= 2;
-                    std::cerr << "w: " << i << std::endl;
+                    //std::cerr << "w: " << i << std::endl;
                 }
                 buffer_type::element_type* ptr=nullptr;
                 queue.push(ptr);

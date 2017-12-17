@@ -6,8 +6,13 @@
 
 #include "RingBufferSPSCLockFree.h"
 #include "RingBufferSPSCLockFree2.h"
+
+#include <boost/circular_buffer.hpp>
+#include "bounded_circular_buffer.hpp"
+
 #include <boost/timer/timer.hpp>
 #include <thread>
+#include <iostream>
 
 template<typename buffertype>
 void test_rb()
@@ -37,8 +42,15 @@ void test_rb()
 }
 
 int main (int argc, char** argv) {
-    test_rb< RingBufferSPSCLockFree2<int> >();
+
+    std::cout << "with mutex\n";
+    test_rb< bounded_buffer<int> >();
+
+    std::cout << "with atomic + bitmask\n";
     test_rb< RingBufferSPSCLockFree<int> >();
+
+    std::cout << "with atomic + modulo\n";
+    test_rb< RingBufferSPSCLockFree2<int> >();
 
     return 0;
 }

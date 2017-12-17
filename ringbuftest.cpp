@@ -27,12 +27,12 @@ typedef int tick_type;
 //typedef boost::circular_buffer<tick_type> ring_type;
 typedef bounded_buffer<tick_type> ring_type;
 
-const int bail = 10000000;
 
 struct Filler {
     ring_type& ring;
     int count;
-    Filler(ring_type& ring) : ring(ring), count(0) { }
+    const int bail;
+    Filler(ring_type& ring, int bail) : ring(ring), count(0), bail(bail) { }
     void operator()() {
         while (true) {
             // if (ring.full()) {
@@ -41,7 +41,7 @@ struct Filler {
             // }
             //ring.push_back(std::make_shared<tick_type>());
             //std::cerr << '+' << count << std::endl;
-            ring.push_front(count);
+            ring.push(count);
             ++count;
             if (count == bail) {
                 std::cerr << "Filler bail with\n";
@@ -55,7 +55,8 @@ struct Filler {
 struct Drainer {
     ring_type& ring;
     int count;
-    Drainer(ring_type& ring) : ring(ring), count(0) { }
+    const int bail;
+    Drainer(ring_type& ring, int bail) : ring(ring), count(0), bail(bail) { }
     void operator()() {
         while (true) {
             // if (ring.empty()) {
@@ -64,7 +65,7 @@ struct Drainer {
             // }
             //std::cerr << '-' << count << std::endl;
             tick_type tick;
-            ring.pop_back(&tick);
+            ring.pop_save(&tick);
             ++count;
             if (count == bail) {
                 std::cerr << "Drainer bail with\n";
@@ -77,6 +78,7 @@ struct Drainer {
 
 int main()
 {
+    const int bail = 10000000;
 
     const int bufsize = 100;
     
@@ -86,8 +88,8 @@ int main()
 
     std::vector<std::thread> threads;
 
-    threads.push_back(std::thread(Filler(ring)));
-    threads.push_back(std::thread(Drainer(ring)));
+    threads.push_back(std::thread(Filler(ring, bail)));
+    threads.push_back(std::thread(Drainer(ring, bail)));
 
     for (auto& th : threads) {
         th.join();
