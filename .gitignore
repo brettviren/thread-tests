@@ -6,3 +6,12 @@ build
 venv*
 *.log
 *.out
+*.aux
+*.fdb_latexmk
+*.fls
+*.nav
+*.pdf
+*.snm
+*.toc
+*.vrb
+auto
