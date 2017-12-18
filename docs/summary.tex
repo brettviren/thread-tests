@@ -1,128 +1,136 @@
-\documentclass{beamer}
+% TEXINPUTS=.:$HOME/git/bvtex: latexmk  -pdf <main>.tex
 
-\usepackage{graphicx}
-\usepackage{hyperref}
+\documentclass[xcolor=dvipsnames]{beamer}
+
+\input{defaults}
+\input{beamer/preamble}
+\setbeamertemplate{navigation symbols}{}
+
+\definecolor{bvtitlecolor}{rgb}{0.98, 0.92, 0.84}
+\definecolor{bvoutline}{rgb}{0.1, 0.1, 0.1}
+
+\renewcommand{\bvtitleauthor}{Brett Viren}
+\renewcommand{\bvtit}{}
+\renewcommand{\bvtitle}{\LARGE Some Tests for Ring Buffer \\ using Commodity CPU+RAM}
+\renewcommand{\bvevent}{}
+\renewcommand{\bvbeamerbackground}{}
 
 \begin{document}
-\begin{frame}
-  \frametitle{Goals}
+\input{beamer/title.tex}
+%\input{beamer/toc.tex}
 
-  \begin{itemize}
-  \item Understand capabilities of commodity computing hardware.
-    \begin{itemize}
-    \item Test data throughput, check for show stoppers.
-    \item Determine required hardware specs.
-    \item Guide design/scaling/fragmentation.
-    \end{itemize}
-  \item Develop toy but realistic prototype
-    \begin{itemize}
-    \item Understand multi-threading design issues.
-    \item Full size ring buffer.
-    \item Prototype algorithms on realistic simulated data.
-    \end{itemize}
-  \end{itemize}
-\end{frame}
+\begin{frame}[fragile]
+  \frametitle{Ring Buffer using Commodity CPU+RAM}
 
-\begin{frame}
-  \frametitle{Test Host Computers}
+  \begin{center}
+    One thread pushing, another thread popping.
+
+    \includegraphics[height=2cm]{ring.pdf}
+
+    How to code it? Can it keep up?
+
+    How does the CPU/RAM hardware matter?
+
+    \vfill
+
+    And, one partial extra: How fast can we get data from OS?
+    
+    \includegraphics[height=2cm]{push.pdf}
+  \end{center}
   
-  CPU and RAM specs:
-  \begin{description}
-  \item[hal] i5-2520M 2.5GHz (4 HT cores) \\ 16GB DDR3 1600 (12 GB/s max)
-  \item[haiku] 17-4770k 3.5G Hz (8 HT cores) \\ 16 GB DDR3 1333 (10.7 GB/s max)
-  \item[hierocles] Xeon E5-2630 2.2GHz (40 HT cores) \\ 64 GB DDR4 ECC 2400 (at 2133, 17 GB/s max)
-  \item[hothstor] i7-7700K 4.2 GHz (8 HT cores) \\ 32 GB DDR4 2400 (19 GB/s)
-  \end{description}
+
 
 \end{frame}
 
-\begin{frame}
-  \frametitle{Multi-threaded Ring Buffer Design}
 
-  Software design findings:
+\begin{frame}
+  \frametitle{Multi-threaded Ring Buffer Software Design}
+
+  Learn/leverage others: \texttt{std::thread}, BOOST, TBB.
   \begin{itemize}
-  \item One thread writes, another reads, requires thread safety.
-  \item First try with \texttt{std::mutex} protection on \texttt{push()}/\texttt{pop()}.
-  \item ``Lockless'' with \texttt{std::atomic} \textbf{gain $13\times$ throughput}.
-  \item The \texttt{operator\%} is expensive, use $2^n$ buffer length and replace modulo with bit-mask, \textbf{gain $2\times$ throughput}.
-  \item 10-20\% speedup with \texttt{size\_t} $\to$ 32bit indices, but:
-    \begin{itemize}
+  \item[+] Try \texttt{std::mutex} protection on \texttt{push()}/\texttt{pop()}.
+  \item[+] Then, ``lockless'' \texttt{std::atomic} for tail/head indices.
+    \begin{itemize}\footnotesize
+    \item[--] requires monotonic increasing indices.
+    \item[\checkmark] \textbf{Gain $\sim 10\times$ throughput}.
+    \end{itemize}
+  \item[+] Then, use buffer size $2^n$, replace \textbf{modulo} with
+    \textbf{bitmask}.
+    \begin{itemize}\footnotesize
+    \item[--] requires maybe bigger buffer than nominal.
+    \item[\checkmark] \textbf{Gain $\sim 2\times$ throughput}.
+    \end{itemize}
+  \item[+] 10-20\% more speedup with \texttt{size\_t} $\to$ 32bit indices, but:
+    \begin{itemize}\footnotesize
     \item[$\times$] 32bits of 0.5 $\mu$s ticks overflows in 35 minutes.
     \item[\checkmark] 64bits gives us almost 300 millennia.
     \end{itemize}
-  \item Per slot allocation (\texttt{new[]}/\texttt{delete[]}) is slow.
-    \begin{itemize}
-    \item Pre-allocate large $N_{ticks} \times N_{chan}$ block of \texttt{short}s.
-    \item \texttt{push()} returns to client a pointer to the array to use.
+  \item[+] Finally, many (\texttt{new[]}/\texttt{delete[]}) is slow and fragmentary.
+    \begin{itemize}\footnotesize
+    \item[$\to$] Pre-allocate large $N_{ticks} \times N_{chan}$ block
+      of \texttt{short}s.
+    \item[$\to$] \texttt{push()} gives client a pointer to the
+      array memory to use.
     \end{itemize}
   \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile,fragile]
   \frametitle{Test Code}
+  Development at:
   \begin{center}
     \url{https://github.com/brettviren/thread-tests}
   \end{center}
-Install \href{http://www.fabfile.org/}{Fabric} and download the provided \href{https://raw.githubusercontent.com/brettviren/thread-tests/master/fabfile.py}{fabfile.py}.
+Reproduce using \href{http://www.fabfile.org/}{Fabric} and the provided \href{https://raw.githubusercontent.com/brettviren/thread-tests/master/fabfile.py}{fabfile.py}.
 \begin{verbatim}
 $ fab -P -H host1,host2,host3 doitall
 \end{verbatim}
-
-\begin{enumerate}
-\item SSH's to each host
-\item \texttt{git clone} the source to a tempdir
-\item Builds it with included Waf \texttt{wscript}.
-  \begin{itemize}
-  \item Needs BOOST, C++ compilers.
-  \end{itemize}
-\item Runs test programs providing timing.
-\item Prints summary (see next slide).
+It will:
+\begin{enumerate}\footnotesize
+\item SSH's to each host and \texttt{git clone} the source to a tempdir.
+\item Builds test code, needs BOOST, C++ compilers, etc.
+\item Runs test programs, checking timing.
 \item Cleans up temporary working directory.
-\item Creates local log file for each host with results.
+\item Saves each host results to local log file.
 \end{enumerate}
 \end{frame}
 
-\begin{frame}[fragile]
-  \frametitle{Example Raw Results}
+
+
+\begin{frame}
+  \frametitle{Test Host Computers}
   
-Raw results saved local log file at end of each hosts' run:
-\tiny
-\begin{verbatim}
-$ cat haiku.out
-host:haiku
-with mutex
- 25.632795s wall, 31.880000s user + 19.350000s system = 51.230000s CPU (199.9%)
-with atomic + bitmask
- 1.814277s wall, 3.630000s user + 0.010000s system = 3.640000s CPU (200.6%)
-with atomic + modulo
- 0.986726s wall, 1.950000s user + 0.000000s system = 1.950000s CPU (197.6%)
-bufsize: 2^18 width=4096 nelements=100000000
- 92.448756s wall, 180.330000s user + 4.260000s system = 184.590000s CPU (199.7%)
-model name	: Intel(R) Core(TM) i7-4770K CPU @ 3.50GHz
-ncores: 8
-total        used        free      shared  buff/cache   available
-Mem:             15           1           4           0           9          13
-Swap:            23           0          23
-\end{verbatim}
+  Hosts' CPU and RAM specs:
+  \begin{description}
+  \item[hal] i5-2520M 2.5GHz (4 HT cores) \\ 16GB DDR3 1600 (12 GB/s max)
+  \item[haiku] 17-4770k 3.5G Hz (8 HT cores) \\ 16 GB DDR3 1333 (10.7 GB/s max)
+  \item[hierocles] Xeon E5-2630 2.2GHz (40 HT cores) \\ 64 GB DDR4 ECC 2400 (at 2133, 17 GB/s max)
+  \item[hothstor] i7-7700K 4.2 GHz (8 HT cores) \\ 32 GB DDR4 2400 (19 GB/s max)
+  \end{description}
+  \begin{center}\footnotesize
+    (max DDR speeds are from wikipedia)    
+  \end{center}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Test Programs}
+  \frametitle{Ring Buffer Test Programs}
   \texttt{test\_*}:
   \begin{description}
-  \item[\texttt{modulo}] runs $10^8$ \textbf{integers} into ring of
-    size $2^{20}$, runs three variants of ring buffer implementation.
-    \begin{itemize}
+  \item[\texttt{modulo}] sends $10^8$ \textbf{integers} into ring of
+    size $2^{20}$.\\
+    Three variants of ring buffer implementation:    
+    \begin{enumerate}
     \item \texttt{std::mutex}-based thread protection
     \item \texttt{std::atomic} + \texttt{operator\%} ring indexing
     \item \texttt{std::atomic} + bitmask ring indexing
-    \end{itemize}
-  \item[\texttt{arene}] runs $10^8$ \textbf{tick vectors} through ring
-    of size $4096 \times 2^{18}$ ($N_{chan} \times N_{tick}$) with a
-    \texttt{memcpy()} on every \texttt{push()} and \texttt{pop()}.
+    \end{enumerate}
+  \item[\texttt{arene}] sends $10^8$ \textbf{tick vectors} into ring of size $ 2^{18}$
     \begin{itemize}
-    \item Corresponds to 819 GB throughput.
-    \item Each tick is two \texttt{memcpy()} so RAM TP is twice.
+    \item Use \texttt{std::atomic} + bitmask design.
+    \item Tick vectors: 4096 ``channels'' with 2B samples.
+    \item Test corresponds to 819 GB apparent transfer.
+    \item But, two \texttt{memcpy()}'s: one for each \texttt{push()} and
+      \texttt{pop()} so really RAM transfer is $2\times$ more.
     \end{itemize}
   \end{description}
 \end{frame}
@@ -142,45 +150,43 @@ Swap:            23           0          23
       \hline
     \end{tabular}
   \end{center}
-  \begin{itemize}
+  \begin{itemize}\footnotesize
   \item The throughput (TP) here is the naive count and does not include
-    that each tick vector has two \texttt{memcpy()} calls.
+    the double \texttt{memcpy()} calls.
     \begin{itemize}\scriptsize
-    \item[$\to$] A little confused why \texttt{hothstor} result is so
+    \item[$\therefore$] I'm a little confused why \texttt{hothstor} result is so
       close to max.
     \end{itemize}
-  \item \texttt{hierocles} doesn't achieve full 200\% CPU on
-    \texttt{mutex} test.  High core count (40) but slow.  Similar
-    memory to \texttt{hothstor}.
-    \begin{itemize}\scriptsize
-    \item[$\to$] Both memory and CPU speeds matter!
-    \end{itemize}
+  \item \texttt{hierocles} has fast RAM but slow CPU.
+    \texttt{haiku}/\texttt{hothstor} have similar CPU, but much
+    different RAM.
+  \item[$\to$] Both CPU and RAM matter!
   \end{itemize}
   Conclusion: DDR4 and 4GHz CPU will allow $>$10GB/s ring buffer.
 
-  \footnotesize
-  $\to$ But, still many other bottlenecks to worry about!
 \end{frame}
 
 \begin{frame}[fragile]
   \frametitle{Unix Domain Socket Test}
+  How fast can OS make data available to push to ring?
+  \begin{center}
+    \includegraphics[height=2cm]{socat.pdf}    
+  \end{center}
+
   \begin{itemize}
   \item I have no FELIX nor 100 Gbps NICs hardware to test with.
-  \item Use Unix Domain Sockets as a test, no idea if it is relevant.
-  \item Rely on \texttt{socat} to do the test because lazy.  Copy \texttt{/dev/zero} through a FIFO socket.
-    \begin{enumerate}
-    \item 1MB $\times 10240$ 
-    \item 8192 $\times 1024000$ 
-    \end{enumerate}
+  \item Use Unix Domain Sockets as easy test
+    \begin{itemize}\footnotesize
+    \item  \textbf{This may be a totally irrelevant test} (but it's easy to make)
+    \item Rely on \texttt{socat} to do the lifting.
+    \end{itemize}
+  \item Approximate possible $\sim$ 1ms chunk sizes:
+    \begin{description}
+    \item[wib block] 1 MB $\times 10240$ = 11 GB 
+    \item[tick vector] 8192 B $\times 1024000$ = 8.4 GB
+    \end{description}
   \end{itemize}
   
-\tiny
-\begin{verbatim}
-socat -u -b32768 UNIX-LISTEN:/tmp/unix.sock /dev/null &
-socat -u -b32768 "SYSTEM:dd if=/dev/zero bs=1M count=10240" UNIX:/tmp/unix.sock
-socat -u -b32768 UNIX-LISTEN:/tmp/unix.sock /dev/null &
-socat -u -b32768 "SYSTEM:dd if=/dev/zero bs=8192 count=1024000" UNIX:/tmp/unix.sock
-\end{verbatim}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -189,7 +195,7 @@ socat -u -b32768 "SYSTEM:dd if=/dev/zero bs=8192 count=1024000" UNIX:/tmp/unix.s
   \begin{center}
     \begin{tabular}[h]{|r|r|r|}
       \hline
-      host & 11GB/1MB & 8.4GB/8K \\
+      host & wib block & tick vector \\
            & (GB/s) & (GB/s) \\
       \hline
       hal & 2.2 & 2.1 \\
@@ -199,9 +205,31 @@ socat -u -b32768 "SYSTEM:dd if=/dev/zero bs=8192 count=1024000" UNIX:/tmp/unix.s
       \hline
     \end{tabular}
   \end{center}
-  Conclusion: While \texttt{socat} copying via Unix Domain Socket is
-  not directly applicable, required 10 GB/s is not achieved.
-  Important to test with actual eg, hardware (FELIX and/or 100 Gbps NIC).
+  Conclusion: While \texttt{socat} copying via Unix Domain Socket may
+  not be applicable, the required 10 GB/s is not achieved.  Important to
+  test with actual eg, hardware (FELIX and/or 100 Gbps NIC).
+\end{frame}
+
+\begin{frame}
+  \frametitle{Summary and Further}
+  \begin{itemize}
+  \item[+] A ring buffer with better than 10 GB/s throughput is feasible
+    with today's commodity CPU+RAM.
+    \begin{itemize}\footnotesize
+    \item[!] Careful threaded software design needed to achieve performance.
+    \end{itemize}
+  \item[?] Simple Unix Domain Socket (FIFO) test achieves only $\sim$50\%
+    required minimum throughput,  but it is not a conclusive test.
+    \begin{itemize}\footnotesize
+    \item[!] Must test throughput of real hardware to RAM.
+    \item[!] FELIX will be tested as part of protoDUNE.  Suggest perform
+      some sustained (many seconds) full-rate 10 GB/s transfers.
+      \begin{itemize}\scriptsize
+      \item[?] Maybe such test results already exist?
+      \end{itemize}
+    \item[?] Shall we try to acquire/test 100 Gbps NICs and host computers?
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \end{document}

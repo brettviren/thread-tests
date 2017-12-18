@@ -1,0 +1,11 @@
+digraph push {
+        rankdir=LR;
+        
+        os[shape=box];
+        pt[shape=point];
+        push[shape=diamond];
+
+        os->pt[dir=none];
+        pt->push;
+        
+}

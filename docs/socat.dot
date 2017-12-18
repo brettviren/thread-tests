@@ -1,0 +1,11 @@
+digraph socat {
+        rankdir=LR;
+        
+        dz[shape=box,label="/dev/zero"];
+        sc1[shape=diamond,label="socat"];
+        soc[shape=box,label="/tmp/unix.sock",penwidth=2];
+        sc2[shape=diamond,label="socat"];
+        dn[shape=box,label="/dev/null"];
+        
+        dz->sc1->soc->sc2->dn;
+}

@@ -1,0 +1,13 @@
+digraph ring {
+        rankdir=LR;
+
+        src[shape=point];
+        push[shape=diamond];
+        ring[shape=circle];
+        pop[shape=diamond];
+        dst[shape=point];        
+
+        src->push->ring->pop->dst;
+        
+        
+}
