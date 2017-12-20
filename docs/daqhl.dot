@@ -1,0 +1,230 @@
+/*
+Make a version of this which is only at the cluster level.
+*/
+
+/*
+640 channels per RCE
+5 FEMB per RCE
+4 RCE per COB
+1 APA per COB
+10 Gbps 
+*/
+digraph daqhl {
+        rankdir=LR;
+        node [style="rounded,filled",color=black,shape=box,fillcolor=white];
+        graph [style=filled, splines=line];
+        //rank = same;
+
+        subgraph cluster_femb {
+                label="APA1";
+                graph [color=pink];
+                
+                subgraph cluster_wib1 {
+                        label="WIB1";
+                        graph [color=red];
+                        femb01;
+                        femb06
+                        femb11;
+                        femb16;
+                }
+                subgraph cluster_wib2 {
+                        label="WIB2";
+                        graph [color=blue];
+                        femb02;
+                        femb07
+                        femb12;
+                        femb17;
+                }
+                subgraph cluster_wib3 {
+                        label="WIB3";
+                        graph [color=red];
+                        femb03;
+                        femb08
+                        femb13;
+                        femb18;
+                }
+                subgraph cluster_wib4 {
+                        label="WIB4";
+                        graph [color=blue];
+                        femb04;
+                        femb09
+                        femb14;
+                        femb19;
+                }
+                subgraph cluster_wib5 {
+                        label="WIB5";
+                        graph [color=red];
+                        femb05;
+                        femb10
+                        femb15;
+                        femb20;
+                }
+        }
+        
+        subgraph cluster_frontend {
+                label="Frontend";
+                subgraph cluster_cob1 {
+                        label="COB1";
+                        graph [color=pink];
+                        edge[dir=both];
+                        
+                        rce01;
+                        rce02;
+                        rce03;
+                        rce04;
+                        uplink1;
+                        switch1;
+                        pipeline1;
+                        dumper1;
+                        flash1;
+                        rce01->switch1;
+                        rce02->switch1;
+                        rce03->switch1;
+                        rce04->switch1;
+                        switch1->pipeline1;
+                }
+                subgraph cluster_cob2 {
+                        label="COB2";
+                        graph [color=pink];
+                        edge[dir=both];
+                        
+                        rce11;
+                        rce12;
+                        rce13;
+                        rce14;
+                        uplink2;
+                        switch2;
+                        pipeline2;
+                        dumper2;
+                        flash2;
+                        rce11->switch2;
+                        rce12->switch2;
+                        rce13->switch2;
+                        rce14->switch2;
+                        switch2->pipeline2;
+                }
+                subgraph cluster_cobN {
+                        label="COBN";
+                        graph [color=pink];
+                        edge[dir=both];
+                        
+                        rceN1;
+                        rceN2;
+                        rceN3;
+                        rceN4;
+                        uplinkN;
+                        switchN;
+                        pipelineN;
+                        dumperN;
+                        flashN;
+                        rceN1->switchN;
+                        rceN2->switchN;
+                        rceN3->switchN;
+                        rceN4->switchN;
+                        switchN->pipelineN;
+                }
+        }
+        subgraph cluster_buffer {
+                label="Buffering";
+                subgraph cluster_buffer1 {
+                        graph [color=pink];
+                        label="Buffer host1"
+                        felix1;
+                        ring1[shape=circle,label="ring"];
+                        RO1;
+                        BR1;
+                        
+                }
+                subgraph cluster_buffer2 {
+                        graph [color=pink];
+                        label="Buffer host2"
+                        felix2;
+                        ring2[shape=circle,label="ring"];
+                        RO2;
+                        BR2;
+                }
+                subgraph cluster_bufferN {
+                        graph [color=pink];
+                        label="Buffer hostN"
+                        felixN;
+                        ringn[shape=circle,label="ring"];
+                        ROn;
+                        BRn;
+                }
+        }
+
+        subgraph cluster_trigger {
+                label="Module Level Triggering";
+                edge[dir=both];
+                GT;
+                subgraph cluster_modtrig {
+                        graph [color=pink];
+                        MT1[label="SP MT"];
+                        MT2[label="DP MT"];
+                        MT3[label="M3 MT"];
+                        MT4[label="M4 MT"];
+                }
+                MT2->GT;
+                MT3->GT;
+                MT4->GT;
+                MT1->GT[label="module primitives\nglobal commands"];
+        }
+        subgraph cluster_egress {
+                label="Egress Processing";
+                EB;
+        }
+
+
+        // data
+
+        edge[penwidth=2];
+        femb01->femb02->femb03->femb04->femb05[dir=none];
+        femb05->rce01[label="15.4Gbps"];        
+        femb06->femb07->femb08->femb09->femb10[dir=none];
+        femb10->rce02[label="15.4Gbps"];        
+        femb11->femb12->femb13->femb14->femb15[dir=none];
+        femb15->rce03[label="15.4Gbps"];        
+        femb16->femb17->femb18->femb19->femb20[dir=none];
+        femb20->rce04[label="15.4Gbps"];        
+
+        edge[penwidth=8];
+        switch1->uplink1[label="82Gbps"];
+        switch2->uplink2[label="82Gbps"];
+        switchN->uplinkN[label="82Gbps"];
+
+        switch1->dumper1[label="82Gbps"];
+        switch2->dumper2[label="82Gbps"];
+        switchN->dumperN[label="82Gbps"];
+
+        flash1->dumper1[dir=back,label="SNB dump"];
+        flash2->dumper2[dir=back,label="SNB dump"];
+        flashN->dumperN[dir=back,label="SNB dump"];
+
+        uplink1->felix1[label="82Gbps"];
+        uplink2->felix2[label="82Gbps"];
+        uplinkN->felixN[label="82Gbps"];
+        
+        felix1->ring1[label="82Gbps"];
+        felix2->ring2[label="82Gbps"];
+        felixN->ringn[label="82Gbps"];
+
+        edge[penwidth=3];
+        ring1->RO1->BR1;
+        ring2->RO2->BR2;
+        ringn->ROn->BRn;
+        BR1->EB;
+        BR2->EB;
+        BRn->EB;
+
+        edge[penwidth=1,style=dashed];
+        pipeline1->MT1[label="trigger\nprimitive",constraint=false];
+        pipeline2->MT1[label="trigger\nprimitive",constraint=false];
+        pipelineN->MT1[label="trigger\nprimitive",constraint=false];
+        MT1->dumper1[constraint=false];
+        MT1->dumper2[constraint=false];
+        MT1->dumperN[constraint=false];
+        
+        MT1->RO1[label=""];
+        MT1->RO2[label=""];
+        MT1->ROn[label="trigcmd"];
+}
