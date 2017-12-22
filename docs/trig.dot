@@ -1,0 +1,90 @@
+digraph trig {
+        //        rankdir=LR;
+        label="DUNE Hierarchical Trigger Concept";
+        
+        node [style="rounded,filled",color=black,shape=box,fillcolor=white];
+        graph [style=filled, splines=true, overlap=false];
+        
+
+        subgraph cluster_global {
+                label="Global Triggering";
+                graph[color=darkorchid1];
+                gt[shape=diamond,label="Global\ntrigger logic"];
+                beam[label="Beam Spill\nNetwork Packet"];
+                extern[label="Global\nExternal"]
+                snews[label="SNEWS"];
+        }
+        subgraph cluster_module1 {
+                label="Detector Module 1 Triggering";
+                labelloc=bottom;
+                graph[color=deeppink3];
+                trigsrc1[label="Self-trigger\nprimitive"];
+                readout1[shape=octagon,label="Readout"];
+                modext1[label="Module Level\nExternal"];
+                {rank=same
+                        mt1[shape=diamond, label="Module 1\ntrigger logic"];
+                        test1[shape=diamond, label="Test"];
+                }
+        }
+        subgraph cluster_module2 {
+                labelloc=bottom;
+                label="Detector Module 2 Triggering";
+                graph[color=deeppink3];
+                trigsrc2[label="Self-trigger\nprimitive"];
+                readout2[shape=octagon,label="Readout"];
+                modext2[label="Module Level\nExternal"]
+                {rank=same 
+                        mt2[shape=diamond, label="Module 2\ntrigger logic"];
+                        test2[shape=diamond, label="Test"];
+                }
+        }
+        subgraph cluster_legend {
+                label="";
+                graph[color=white];
+                node[shape=point];
+                subgraph cluster_l1 {
+                        p1->p3[label="trigger\n command",style=solid];
+
+                }                        
+                subgraph cluster_l2 {
+                        p2->p4[label="trigger\n primitive",style=dashed,dir=back];
+                }
+        }
+
+
+        // trigger primitives
+        edge[style=dashed];
+        
+        snews->gt;
+        beam->gt;
+        extern->gt;
+        
+        mt1->modext1[dir=back];
+        mt2->modext2[dir=back];
+        
+        mt1->trigsrc1[dir=back];
+        mt2->trigsrc2[dir=back];
+
+        mt1->gt;
+        mt2->gt;
+        
+//        p4->p2[label="trigger\nprimitive"];
+
+        // trigger commands
+        edge[style=solid];
+        
+        gt->mt1;
+        gt->mt2;
+        mt1->readout1;
+        mt2->readout2;
+
+        gt->snews[constraint=false];
+
+        test1->readout1;
+        test2->readout2;
+
+        mt1->test1[style=invis];
+        mt2->test2[style=invis];
+        
+        edge[style=invis];
+}
