@@ -29,64 +29,52 @@ digraph sphil {
                         WIBj[label="WIBs"];
                 }
         }
+
         subgraph cluster_daq {
-                label="Single-Phase DAQ Data and Trigger Flow (only 2 APAs shown)";
+                label="Single-Phase DAQ High-Level Functional Blocks (2 APAs shown)";
                 labelloc=bottom;
                 graph[color=deeppink4];                
 
                 trig[shape=diamond,label="Single-Phase\nModule-Level\nTrigger Logic"];
 
-                subgraph cluster_apa {
+                subgraph cluster_apa1 {
                         label="APA 1 Data and Trigger Flow";
                         graph[color=deeppink3];
-                        subgraph cluster_fe {
-                                label="Pre-Processing system";
-                                graph[color=deeppink1];
-                                fe[label="DAQ Front End"];
-                                pipe[label="Trigger Primitive\nPipeline"];
-                        }
-                        subgraph cluster_buf {
-                                label="Buffering system";
-                                labelloc=top;
-                                graph[color=deeppink1, ranksep=.8, nodesep=.25];
-                                buf[label="10s RAM\nbuffer"];
-                                snb[label="SNB dump"];
-                                ro[shape=hexagon,label="Apply Trigger\nCommand"];
-                        }
 
-                        subgraph cluster_ro {
-                                label="Readout system";
-                                graph[color=deeppink2];
-                                br[label="Board Reader"];
-                        }
+                        fe1[label="Front End\nData Receiver"];
+                        pipe1[label="Trigger\nPrimitive\nProduction\nPipeline"];
+                        buf1[shape=circle,label="~10s RAM\nring buffer"];
+                        extraction1[label="Buffer Extraction\nProcess"];
+                        snb1[label="SNB dump\nbuffer\n(RAM/SSD)"];
+                        sel1[label="Selection\nbuffer\n(Lossy, RAM)"];
+                        etc1[label="Other\nbuffers\n(SSD/RAM)"]
+                        ro1[shape=hexagon,label="Apply Trigger\nCommand"];
+                        br1[label="Board Reader"];
+
+                        {rank=same fe1, buf1}
+                        {rank=same extraction1, ro1}
+                        {rank=same snb1, sel1, etc1}
+
                 }
 
                 subgraph cluster_apa2 {
                         label="APA 2 Data and Trigger Flow";
                         graph[color=deeppink3];
 
-                        subgraph cluster_fe2 {
-                                label="Pre-Processing system";
-                                graph[color=deeppink1];
-                                fe2[label="DAQ Front End"];
-                                pipe2[label="Trigger Primitive\nPipeline"];
-                        }
-                        subgraph cluster_buf2 {
-                                label="Buffering system";
-                                labelloc=top;
-                                graph[color=deeppink1, ranksep=.8, nodesep=.25];
-                                buf2[label="10s RAM\nbuffer"];
-                                snb2[label="SNB dump"];
-                                ro2[shape=hexagon,label="Apply Trigger\nCommand"];
-                                {rank=same
-                                ro2->snb2[style=invis];}
-                                
-                        }
-                        subgraph cluster_ro2 {
-                                label="Readout system";
-                                graph[color=deeppink2];
-                                br2[label="Board Reader"];
-                        }
+                        fe2[label="Front End\nData Receiver"];
+                        pipe2[label="Trigger\nPrimitive\nProduction\nPipeline"];
+                        buf2[shape=circle,label="~10s RAM\nring buffer\n(Lossless)"];
+                        extraction2[label="Buffer Extraction\nProcess"];
+                        snb2[label="SNB dump\nbuffer\n(SSD/RAM)"];
+                        sel2[label="Selection\nbuffer\n(Lossy, RAM)"];
+                        etc2[label="Other\nbuffers\n(SSD/RAM)"];
+                        ro2[shape=hexagon,label="Apply Trigger\nCommand"];
+                        br2[label="Board Reader"];
+
+                        {rank=same fe2, buf2}
+                        {rank=same extraction2, ro2}
+                        {rank=same snb2, sel2, etc2}
+
                 }
                 
                 subgraph cluster_eb {
@@ -100,59 +88,79 @@ digraph sphil {
         }
         // Full data
         edge[penwidth=8];
+
         CE1->WIB1;
         CE2->WIB2;
         CEi->WIBi
         CEj->WIBj;
-        WIB1->fe[label="  80 Gbps"];
+        WIB1->fe1[label="  80 Gbps"];
         WIB2->fe2[label=" 80 Gbps"];
-        fe->buf//[headlabel="full data\n(possibly\ncompressed)\n\n"];
+
+        buf1->fe1[dir=back,label="full data stream\n(possibly compressed)\n\n"];
         fe2->buf2[label="full data\n(possibly\ncompressed)\n\n"];
         
-        buf->snb;
-        buf2->snb2;
-        
+        buf1->extraction1[label=" pull\n  selected\n data"];
+        buf2->extraction2[label=" pull\n  selected\n data"];
 
+        extraction1->snb1;
+        extraction2->snb2;
+        
         // collection plane data
         edge[penwidth=4];
-        fe->pipe[label="960\n collection\nchannels"];
-        fe2->pipe2// [label="960\n collection\nchannels"];
+
+        fe1->pipe1[style=dotted];
+        fe2->pipe2[style=dotted];
+
+        buf1->pipe1[label="Optional paths:\n960 collection\nchannels",style=dotted];
+        buf2->pipe2[label="Optional paths:\n960 collection\nchannels",style=dotted];
 
         // reduced data
         edge[pendwidth=2]
-        buf->br[headlabel=" selected\n data\n "];
-        buf2->br2[headlabel=" selected data\n "]
-        
-        br->eb;
-        br2->eb;
 
+        extraction1->sel1;
+        extraction2->sel2;
+
+        sel1->br1[label="all non-SNB\ntriggered\ndata"];
+        sel2->br2[taillabel="all non-SNB\ntriggered\ndata"];
+        
+        // egress
+        br1->eb;
+        br2->eb;
         eb->fp->dbuf;
 
         // trickle
         edge[penwidth=1,style=solid];
-        snb->br[constraint=false,label="trickle out                "];
-        snb2->br2[constraint=false,label="trickle out"];
+        snb1->br1[constraint=false,label="trickle\nout"];
+        snb2->br2[constraint=false,label="trickle\nout"];
         
+        extraction1->etc1;
+        extraction2->etc2;
+
 
         // trigger primitive
         edge[penwidth=1,style=dashed];
-        pipe:se->trig[label="trigger primitives"];
+
+        pipe1:se->trig[label="trigger primitives"];
         pipe2:sw->trig;
 
         // trigger command
         edge[style=solid];
-        trig->ro[label="trigger command"];
-        trig->ro2[label="trigger command"];
 
+        trig->ro1[label="trigger\ncommand"];
+        trig->ro2[label="trigger\ncommand"];
+
+        ro1->extraction1[label="trigger\ncommand"];
+        ro2->extraction2[label="trigger\ncommand"];
+
+        pipe1->ro1[taillabel="fast trigger\ncommand"];
+        pipe2->ro2[taillabel="fast trigger\ncommand"];
+        
+        
         // influence layout
         edge[style=invis];
 
-        trig->br;
-        trig->br2;
-
-        buf->ro;
-        buf2->ro2;
+        etc1->snb1->sel1;
         
-        ro->br;
-        ro2->br2;        
+        sel2->snb2->etc2;
+        
 }

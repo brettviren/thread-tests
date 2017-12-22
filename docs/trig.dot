@@ -1,6 +1,6 @@
 digraph trig {
         //        rankdir=LR;
-        label="DUNE Hierarchical Trigger Concept";
+        label="DUNE Hierarchical Trigger System";
         
         node [style="rounded,filled",color=black,shape=box,fillcolor=white];
         graph [style=filled, splines=true, overlap=false];
