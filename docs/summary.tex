@@ -221,14 +221,12 @@ It will:
   \item[?] Simple Unix Domain Socket (FIFO) test achieves only $\sim$50\%
     required minimum throughput,  but it is not a conclusive test.
     \begin{itemize}\footnotesize
-    \item[!] Must test throughput of real hardware to RAM.
     \item[!] FELIX will be tested as part of protoDUNE.  Suggest perform
       some sustained (many seconds) full-rate 10 GB/s transfers.
-      \begin{itemize}\scriptsize
-      \item[?] Maybe such test results already exist?
-      \end{itemize}
-    \item[?] Shall we try to acquire/test 100 Gbps NICs and host computers?
+    \item[\checkmark] Found \href{http://iopscience.iop.org/article/10.1088/1742-6596/664/8/082050}{CHEP2015 proceedings} which demonstrate FELIX's FPGA can DMA at 10 GByte/sec.
     \end{itemize}
+  \item[$\to$] Will start following up on pointers from FELIX experts on more
+    sophisticated software designs for ring buffers.
   \end{itemize}
 \end{frame}
 
