@@ -14,11 +14,12 @@ int main(int argc, char* argv[])
     int nbits = 18;
     int width = 4096;
     std::size_t latency = 0;
+    int snooze_ns = 500;
 
     if (argc < 2) {
         std::cerr << "usage: " << argv[0] << " nelements [nbits] [width] [latency] [snooze] [seed]\n";
         std::cerr << "any zero values will use defaults: "
-                  << nelements << " " << nbits << " " << width << " " << latency << " 0 0\n";
+                  << nelements << " " << nbits << " " << width << " " << latency << " " << snooze_ns << " 0\n";
         std::cerr << "nonzero seed will fill input array with random values\n";
         return 1;
     }
@@ -55,7 +56,6 @@ int main(int argc, char* argv[])
         }
     }
 
-    int snooze_ns = 0;
     if (argc > 5) {
         int tmp = atoi(argv[5]);
         if (tmp > 0) {
