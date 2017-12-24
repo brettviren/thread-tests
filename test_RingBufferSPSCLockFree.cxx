@@ -25,7 +25,7 @@ json test_rb(int nelements)
     const int bufsize = 2<<nbits;
     buffer_type queue(bufsize);
 
-    boost::timer::auto_cpu_timer timer(std::cerr);
+    boost::timer::cpu_timer timer;
 
     std::thread write_thread( [&] () {
             for(int i = 0; i<nelements; i++) {

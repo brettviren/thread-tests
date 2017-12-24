@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
     }        
 
     // ready... set... go!
-    boost::timer::auto_cpu_timer timer(std::cerr,3);
+    boost::timer::cpu_timer timer;
 
     std::thread write_thread( [&] () {
             int expo = 2;

@@ -2,7 +2,7 @@
 
 import json
 
-from fabric.api import run, env, settings, cd
+from fabric.api import local, run, env, settings, cd
 
 # hosts on which to run tests.  In general, depends on .ssh/config
 # entries for access.
@@ -23,6 +23,16 @@ nbits=18
 width=4096
 latencies=[0, 2, 4, 10, 100, 1000]
 
+def junk():
+    with cd("/home/bv/dev/mmaptest"):
+        out = run("./build/test_modulo 10000")
+    print 'OUT:', type(out)
+    print str(out)
+    print 'STDOUT:', type(out.stdout)
+    print str(out.stdout)
+    print 'STDERR:', type(out.stderr)
+    print str(out.stderr)
+
 def doitall():
     giturl="https://github.com/brettviren/thread-tests.git"
     tmpdir = run('mktemp -d /tmp/thread-tests-XXXXX')
@@ -42,7 +52,7 @@ def doitall():
     results = dict()
     with cd(srcdir):
         run("./waf -p configure build")
-        jtext = run("./build/test_modulo %d" % nelements).stdout
+        jtext = run("./build/test_modulo %d 2>&1" % nelements).stdout
         results["test_modulo"] = json.loads(jtext)
 
         t2s = list()
