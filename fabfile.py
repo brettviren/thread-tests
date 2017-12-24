@@ -15,6 +15,11 @@ def gather_info():
     print host,cpu,ncores
     
 
+nelements=100000000
+nbits=18
+width=4096
+latencies=[0, 2, 4, 10, 100, 1000]
+
 def doitall():
     giturl="https://github.com/brettviren/thread-tests.git"
     tmpdir = run('mktemp -d /tmp/thread-tests-XXXXX')
@@ -29,13 +34,22 @@ def doitall():
     with cd(srcdir):
         run("./waf -p configure build")
         t1 = run("./build/test_modulo")
-        t2 = run("./build/test_arene")
+        t2s = list()
+        for latency in latencies:
+            t2 = run("./build/test_arene %d %d %d %d" % (nelements, nbits, width, latency))
+            t2s.append(t2)
         t3 = run("./uds.sh")
  
     host = env['host']
     with open("%s.log" % host, "w") as fp:
-        fp.write('host:%s\n%s\n%s\n%s\n%s\nncores: %s\n%s\n' % \
-                 (host,t1,t2,t3,i1,i2,i3))
+        fp.write('host: %s\n' % host)
+        fp.write('cpu: %s\n' % i1)
+        fp.write('ncores: %s\n' % i2)
+        fp.write('memory:\n%s\n' % i3)
+        fp.write('modulo:\n%s\n'%t1)
+        fp.write('uds:%s\n'%t3)
+        for latency, t2 in zip(latencies,t2s):
+            fp.write("latency: %d:\n%s\n" % (latency,t2))
 
     run("rm -rf %s" % tmpdir)
 
