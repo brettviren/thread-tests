@@ -1,5 +1,7 @@
 #!/usr/bin/env fab
 
+import json
+
 from fabric.api import run, env, settings, cd
 
 # hosts on which to run tests.  In general, depends on .ssh/config
@@ -25,31 +27,44 @@ def doitall():
     tmpdir = run('mktemp -d /tmp/thread-tests-XXXXX')
     srcdir = "%s/src" % (tmpdir, )
 
-    i1 = run("grep '^model name' /proc/cpuinfo  |head -1")
-    i2 = run("grep -c '^processor' /proc/cpuinfo")
-    i3 = run("free --giga")
+    mem = run("free").split('\n')[1:]
+    info = dict(
+        cpu = run("grep '^model name' /proc/cpuinfo  |head -1").split(':',1)[1],
+        ncpus = run("grep -c '^processor' /proc/cpuinfo"),
+        host = env['host'],
+        memory = mem[0].split()[1],
+        swap = mem[1].split()[1]
+    )
 
     run("git clone -q %s %s" % (giturl,srcdir))
     
+    results = dict()
     with cd(srcdir):
         run("./waf -p configure build")
-        t1 = run("./build/test_modulo")
+        jtext = run("./build/test_modulo")
+        results["test_modulo"] = json.loads(jtext)
+
         t2s = list()
         for latency in latencies:
-            t2 = run("./build/test_arene %d %d %d %d" % (nelements, nbits, width, latency))
-            t2s.append(t2)
-        t3 = run("./uds.sh")
+            jtext = run("./build/test_arene %d %d %d %d" % (nelements, nbits, width, latency))
+            t2s.append(json.loads(jtext))
+        results["test_arene"] = t2s
+
+        uds = run("./uds.sh").split('\n')
+        uds1 = uds[3].split()
+        uds2 = uds[6].split()
+        results["uds"] = [
+            dict(records=uds[0].split('+',1)[0],
+                 nbytes=uds1[0],
+                 time=uds1[6]),
+            dict(records=uds[3].split('+',1)[0],
+                 nbytes=uds2[0],
+                 time=uds2[6])
+        ]
  
-    host = env['host']
-    with open("%s.log" % host, "w") as fp:
-        fp.write('host: %s\n' % host)
-        fp.write('cpu: %s\n' % i1)
-        fp.write('ncores: %s\n' % i2)
-        fp.write('memory:\n%s\n' % i3)
-        fp.write('modulo:\n%s\n'%t1)
-        fp.write('uds:%s\n'%t3)
-        for latency, t2 in zip(latencies,t2s):
-            fp.write("latency: %d:\n%s\n" % (latency,t2))
+    dat = dict(info=info, results=results)
+    with open("{host}.json".format(**info), "w") as fp:
+        fp.write(json.dumps(dat,indent=4)
 
     run("rm -rf %s" % tmpdir)
 

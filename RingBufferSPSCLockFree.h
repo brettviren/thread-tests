@@ -14,6 +14,8 @@ class RingBufferSPSCLockFree
 {
 public:
 
+    typedef T element_type;
+
     explicit RingBufferSPSCLockFree(std::size_t capacity)
         : m_capacity{capacity} {
             

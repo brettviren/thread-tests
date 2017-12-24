@@ -5,6 +5,8 @@
 #include <random>               // only if seed is given
 #include <iostream>
 
+#include "json.hpp"
+using json = nlohmann::json;
 
 int main(int argc, char* argv[])
 {
@@ -53,11 +55,11 @@ int main(int argc, char* argv[])
         }
     }
 
-    std::chrono::nanoseconds snooze(0);
+    int snooze_ns = 0;
     if (argc > 5) {
         int tmp = atoi(argv[5]);
         if (tmp > 0) {
-            snooze = std::chrono::nanoseconds(tmp);
+            snooze_ns = tmp;
         }
     }
 
@@ -71,16 +73,6 @@ int main(int argc, char* argv[])
 
     typedef arene::BlockBuffer<short> buffer_type;
     buffer_type queue(width, bufsize);
-
-    std::cout
-        << "sample: " << sizeof(buffer_type::element_type) << "\n"
-        << "bits: " << nbits << "\n"
-        << "depth: " << bufsize << "\n"
-        << "width: " << width << "\n"
-        << "nticks: " << nelements << "\n"
-        << "latency: " << latency << "\n"
-        << "snooze: " << snooze.count() << "\n"
-        << "seed: " << seed << "\n";
 
     
     // note: these junk arrays are used inside the write and read
@@ -103,7 +95,7 @@ int main(int argc, char* argv[])
     }        
 
     // ready... set... go!
-    boost::timer::auto_cpu_timer timer(std::cout,3);
+    boost::timer::auto_cpu_timer timer(std::cerr,3);
 
     std::thread write_thread( [&] () {
             int expo = 2;
@@ -123,6 +115,7 @@ int main(int argc, char* argv[])
             for(int i = 0; i<nelements; i++) {
                 
                 if (latency > 0) {
+                    std::chrono::nanoseconds snooze(snooze_ns);
                     while (true) {
                         const std::size_t head = queue.head();
                         const std::size_t tail = queue.tail();
@@ -147,12 +140,35 @@ int main(int argc, char* argv[])
     double data_throughput = volume/seconds;
     double transaction_tp = nelements / seconds;
 
-    std::cout << "time: " << seconds << " s\n"
-              << "volume: " << volume*1.0e-9 << " GB\n"
-              << "data: " << data_throughput*1.0e-9 << " GB/s\n"
-              << "ticks: " << transaction_tp*1.0e-6 << " MT/s\n"
-              << "times: ";     // filled in by timer's dtor
+    {
+
+        json jbuffer;
+        jbuffer["element_size"] = (int)sizeof(buffer_type::element_type);
+        jbuffer["log2depth"] = nbits;
+        jbuffer["depth"] = bufsize;
+        jbuffer["width"] = width;
+        
+        json jparam;
+        jparam["nticks"] = nelements;
+        jparam["latency"] = latency;
+        jparam["snooze_ns"] = snooze_ns;
+        jparam["seed"] = seed;
+
+        json jres;
+        jres["wall"] = 1.0e-9*elapsed.wall;
+        jres["system"] = 1.0e-9*elapsed.system;
+        jres["user"] = 1.0e-9*elapsed.user;
+        jres["volume"] = volume;
+        jres["data_tp"] = data_throughput;
+        jres["tick_tp"] = transaction_tp;
+
+        json jdat;
+        jdat["buffer"] = jbuffer;
+        jdat["params"] = jparam;
+        jdat["results"] = jres;
     
+        std::cout << jdat.dump(4) << std::endl;
+    }
     return 0;
 }
 
