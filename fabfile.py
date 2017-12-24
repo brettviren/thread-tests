@@ -17,7 +17,8 @@ def gather_info():
     print host,cpu,ncores
     
 
-nelements=100000000
+#nelements=100000000
+nelements=100000
 nbits=18
 width=4096
 latencies=[0, 2, 4, 10, 100, 1000]
@@ -41,12 +42,12 @@ def doitall():
     results = dict()
     with cd(srcdir):
         run("./waf -p configure build")
-        jtext = run("./build/test_modulo")
+        jtext = run("./build/test_modulo %d" % nelements).stdout
         results["test_modulo"] = json.loads(jtext)
 
         t2s = list()
         for latency in latencies:
-            jtext = run("./build/test_arene %d %d %d %d" % (nelements, nbits, width, latency))
+            jtext = run("./build/test_arene %d %d %d %d" % (nelements, nbits, width, latency)).stdout
             t2s.append(json.loads(jtext))
         results["test_arene"] = t2s
 
@@ -64,7 +65,7 @@ def doitall():
  
     dat = dict(info=info, results=results)
     with open("{host}.json".format(**info), "w") as fp:
-        fp.write(json.dumps(dat,indent=4)
+        fp.write(json.dumps(dat,indent=4))
 
     run("rm -rf %s" % tmpdir)
 

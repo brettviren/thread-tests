@@ -16,10 +16,10 @@ int main(int argc, char* argv[])
     std::size_t latency = 0;
 
     if (argc < 2) {
-        std::cout << "usage: " << argv[0] << " nelements [nbits] [width] [latency] [snooze] [seed]\n";
-        std::cout << "any zero values will use defaults: "
+        std::cerr << "usage: " << argv[0] << " nelements [nbits] [width] [latency] [snooze] [seed]\n";
+        std::cerr << "any zero values will use defaults: "
                   << nelements << " " << nbits << " " << width << " " << latency << " 0 0\n";
-        std::cout << "nonzero seed will fill input array with random values\n";
+        std::cerr << "nonzero seed will fill input array with random values\n";
         return 1;
     }
 
