@@ -19,8 +19,8 @@ def gather_info():
 
 nelements=100000000
 nbits=18
-width=4096
-latencies=[0, 1, 2, 4, 10, 100, 200, 500, 1000]
+width=2560
+latencies=[0, 1, 2, 4, 10, 100, 1000, 10000]
 
 def junk():
     with cd("/home/bv/dev/mmaptest"):
