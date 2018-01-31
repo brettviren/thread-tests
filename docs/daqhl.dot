@@ -17,7 +17,7 @@ digraph daqhl {
 
         subgraph cluster_femb {
                 label="APA1";
-                graph [color=pink];
+                graph [color=lightskyblue];
                 
                 subgraph cluster_wib1 {
                         label="WIB1";
@@ -65,35 +65,40 @@ digraph daqhl {
                 label="Frontend";
                 subgraph cluster_cob1 {
                         label="COB1";
-                        graph [color=pink];
-                        edge[dir=both];
+                        graph [color=cornsilk];
                         
-                        rce01;
-                        rce02;
-                        rce03;
-                        rce04;
-                        uplink1;
-                        switch1;
-                        pipeline1;
-                        dumper1;
-                        flash1;
-                        rce01->switch1;
-                        rce02->switch1;
-                        rce03->switch1;
-                        rce04->switch1;
-                        switch1->pipeline1;
+                        rce01->snbdump01[penwidth=2];
+                        rce02->snbdump02[penwidth=2];
+                        rce03->snbdump03[penwidth=2];
+                        rce04->snbdump04[penwidth=2];
+
+                        // fixme: implicated in trigger processing
+                        dtm1[shape=hexagon];
+                        
+
+                        uplink1[label="2x40 Gbps\n2x10 Gbps"];
+                        switch1[label="40 Gbps\nswitch"];
+
+                        rce01->uplink1[penwidth=2];
+                        rce02->uplink1[penwidth=2];
+                        rce03->uplink1[penwidth=2];
+                        rce04->uplink1[penwidth=2];
+                        rce01->pipeline01[penwidth=2];
+                        rce02->pipeline02[penwidth=2];
+                        rce03->pipeline03[penwidth=2];
+                        rce04->pipeline04[penwidth=2];
                 }
                 subgraph cluster_cob2 {
                         label="COB2";
-                        graph [color=pink];
+                        graph [color=cornsilk];
                         edge[dir=both];
                         
                         rce11;
                         rce12;
                         rce13;
                         rce14;
-                        uplink2;
-                        switch2;
+                        uplink2[label="2x40 Gbps\n2x10 Gbps"];
+                        switch2[label="40 Gbps\nswitch"];
                         pipeline2;
                         dumper2;
                         flash2;
@@ -101,19 +106,19 @@ digraph daqhl {
                         rce12->switch2;
                         rce13->switch2;
                         rce14->switch2;
-                        switch2->pipeline2;
+                        switch2->pipeline2[penwidth=3,label="~30 Gbps\n(collection\nchannels)"];
                 }
                 subgraph cluster_cobN {
                         label="COBN";
-                        graph [color=pink];
+                        graph [color=cornsilk];
                         edge[dir=both];
                         
                         rceN1;
                         rceN2;
                         rceN3;
                         rceN4;
-                        uplinkN;
-                        switchN;
+                        uplinkN[label="2x40 Gbps\n2x10 Gbps"];
+                        switchN[label="40 Gbps\nswitch"];
                         pipelineN;
                         dumperN;
                         flashN;
@@ -121,13 +126,13 @@ digraph daqhl {
                         rceN2->switchN;
                         rceN3->switchN;
                         rceN4->switchN;
-                        switchN->pipelineN;
+                        switchN->pipelineN[penwidth=3,label="~30 Gbps\n(collection\nchannels)"];
                 }
         }
         subgraph cluster_buffer {
                 label="Buffering";
                 subgraph cluster_buffer1 {
-                        graph [color=pink];
+                        graph [color=aliceblue];
                         label="Buffer host1"
                         felix1;
                         ring1[shape=circle,label="ring"];
@@ -136,7 +141,7 @@ digraph daqhl {
                         
                 }
                 subgraph cluster_buffer2 {
-                        graph [color=pink];
+                        graph [color=aliceblue];
                         label="Buffer host2"
                         felix2;
                         ring2[shape=circle,label="ring"];
@@ -144,7 +149,7 @@ digraph daqhl {
                         BR2;
                 }
                 subgraph cluster_bufferN {
-                        graph [color=pink];
+                        graph [color=aliceblue];
                         label="Buffer hostN"
                         felixN;
                         ringn[shape=circle,label="ring"];
@@ -158,7 +163,7 @@ digraph daqhl {
                 edge[dir=both];
                 GT;
                 subgraph cluster_modtrig {
-                        graph [color=pink];
+                        graph [color=cornsilk];
                         MT1[label="SP MT"];
                         MT2[label="DP MT"];
                         MT3[label="M3 MT"];
@@ -188,15 +193,15 @@ digraph daqhl {
         femb20->rce04[label="15.4Gbps"];        
 
         edge[penwidth=8];
-        switch1->uplink1[label="82Gbps"];
+        //switch1->uplink1[label="82Gbps"];
         switch2->uplink2[label="82Gbps"];
         switchN->uplinkN[label="82Gbps"];
 
-        switch1->dumper1[label="82Gbps"];
+        //switch1->dumper1[label="82Gbps"];
         switch2->dumper2[label="82Gbps"];
         switchN->dumperN[label="82Gbps"];
 
-        flash1->dumper1[dir=back,label="SNB dump"];
+        //flash1->dumper1[dir=back,label="SNB dump"];
         flash2->dumper2[dir=back,label="SNB dump"];
         flashN->dumperN[dir=back,label="SNB dump"];
 
@@ -217,10 +222,18 @@ digraph daqhl {
         BRn->EB;
 
         edge[penwidth=1,style=dashed];
-        pipeline1->MT1[label="trigger\nprimitive",constraint=false];
+        // fixme: trigger comms go through the switch.
+        rce01->MT1[label="trigger\nprimitive",constraint=false];
+        rce02->MT1[label="trigger\nprimitive",constraint=false];
+        rce03->MT1[label="trigger\nprimitive",constraint=false];
+        rce04->MT1[label="trigger\nprimitive",constraint=false];
         pipeline2->MT1[label="trigger\nprimitive",constraint=false];
         pipelineN->MT1[label="trigger\nprimitive",constraint=false];
-        MT1->dumper1[constraint=false];
+        //MT1->dumper1[constraint=false];
+        MT1->rce01[constraint=false];
+        MT1->rce02[constraint=false];
+        MT1->rce03[constraint=false];
+        MT1->rce04[constraint=false];
         MT1->dumper2[constraint=false];
         MT1->dumperN[constraint=false];
         

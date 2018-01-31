@@ -95,3 +95,11 @@ theoretical max.  Given these numbers and the three host CPU and RAM
 specs it's hard to fully account for these different time
 measurements.  The test jobs are pegged at 200% CPU.
 
+
+** CPU speed
+
+The [[./bigarray.cpp]] and [[./test_nparray.cpp]] tests do some dumb-simple things to emulate part of what might be done to find L0 trigger primitives.  The first uses an array of zeros and the second uses data from a numpy array.  The 2D array is interpreted as a block of Ntick by Nsamples.  Vectors of length Ntick are used to add sum and sum of square of samples.
+
+Some results on hierocles:
+
+ - bigarray :: 
