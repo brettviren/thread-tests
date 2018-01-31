@@ -71,6 +71,17 @@ namespace arene {
             while(! try_pop(ptr));
         }
 
+        std::size_t head() const {
+            return m_write.load();
+        }
+        std::size_t tail() const {
+            return m_read.load();
+        }
+
+        std::size_t size() const {
+            return m_write.load(std::memory_order_acquire) - m_read.load(std::memory_order_release);
+        }
+
     private:
         int increment(unsigned int n) {
             // fixme: apply mask here to avoid overflow?

@@ -14,16 +14,19 @@
 #include <thread>
 #include <iostream>
 
-template<typename buffertype>
-void test_rb()
+#include "json.hpp"
+using json = nlohmann::json;
+
+
+template<typename buffer_type>
+json test_rb(int nelements)
 {
-    const int bufsize = 2<<20;
-    const int nelements = 100000000;
-    buffertype queue(bufsize);
+    const int nbits = 20;
+    const int bufsize = 2<<nbits;
+    buffer_type queue(bufsize);
 
-    boost::timer::auto_cpu_timer timer;
+    boost::timer::cpu_timer timer;
 
-    
     std::thread write_thread( [&] () {
             for(int i = 0; i<nelements; i++) {
                 queue.push(i);
@@ -39,18 +42,48 @@ void test_rb()
     write_thread.join();
     read_thread.join();
      
+    const boost::timer::cpu_times elapsed(timer.elapsed());
+
+    json jbuffer;
+    jbuffer["element_size"] = (int)sizeof(typename buffer_type::element_type);
+    jbuffer["log2depth"] = nbits;
+    jbuffer["depth"] = bufsize;
+    jbuffer["width"] = 1;
+    
+    json jpar;
+    jpar["nelements"] = nelements;
+
+    json jres;
+    jres["wall"] = 1.0e-9*elapsed.wall;
+    jres["system"] = 1.0e-9*elapsed.system;
+    jres["user"] = 1.0e-9*elapsed.user;
+    
+
+    json jdat;
+    jdat["buffer"] = jbuffer;
+    jdat["params"] = jpar;
+    jdat["results"] = jres;
+    
+    return jdat;
 }
 
 int main (int argc, char** argv) {
+    int nelements = 100000000;
+    if (argc > 1) {
+        int tmp = atoi(argv[1]);
+        if (tmp > 0) {
+            nelements = tmp;
+        }
+    }
 
-    std::cout << "with mutex\n";
-    test_rb< bounded_buffer<int> >();
+    json jdat;
+    jdat["mutex"] =
+        test_rb< bounded_buffer<int> >(nelements);
+    jdat["atomic_modulo"] =
+        test_rb< RingBufferSPSCLockFree<int> >(nelements);
+    jdat["atomic_bitmask"] =
+        test_rb< RingBufferSPSCLockFree2<int> >(nelements);
 
-    std::cout << "with atomic + modulo\n";
-    test_rb< RingBufferSPSCLockFree<int> >();
-
-    std::cout << "with atomic + bitmask\n";
-    test_rb< RingBufferSPSCLockFree2<int> >();
-
+    std::cout << jdat.dump(4) << std::endl;
     return 0;
 }

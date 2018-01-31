@@ -11,10 +11,12 @@ template <class T>
 class bounded_buffer {
 public:
 
+
     typedef boost::circular_buffer<T> container_type;
     typedef typename container_type::size_type size_type;
     typedef typename container_type::value_type value_type;
     typedef typename boost::call_traits<value_type>::param_type param_type;
+    typedef typename boost::call_traits<value_type>::param_type element_type;
 
     explicit bounded_buffer(size_type capacity) : m_unread(0), m_container(capacity) {}
 

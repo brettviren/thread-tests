@@ -2,11 +2,70 @@
 
 Just some STD C++, BOOST and TBB tests for learning and basic benchmarking.
 
-* Some numbers
+* Exercise
 
-An implementation, in some state of development, of a thread safe
-circular aka ring buffer is in [[./arene.h]].  A test is in
-[[./test_arene.cxx]] but it's changing as I make notes in the next sections.
+#+BEGIN_EXAMPLE
+  $ pip install -r requirements.txt
+  $ fab -H hierocles.bnl,hothstor2.bnl,haiku,hal -P doitall
+  $ python reports.py host-report.txt.j2 *.json
+  Host haiku
+  8  Intel(R) Core(TM) i7-4770K CPU @ 3.50GHz
+  RAM 16379076 SWAP 24413180
+
+      0   9.01 GB/s   1.10 MT/s  819 GB  90.88 s
+      1   9.13 GB/s   1.11 MT/s  819 GB  89.77 s
+      2   9.13 GB/s   1.11 MT/s  819 GB  89.74 s
+      4   9.14 GB/s   1.12 MT/s  819 GB  89.63 s
+     10   9.03 GB/s   1.10 MT/s  819 GB  90.68 s
+    100   9.04 GB/s   1.10 MT/s  819 GB  90.60 s
+    200   9.12 GB/s   1.11 MT/s  819 GB  89.85 s
+    500   9.12 GB/s   1.11 MT/s  819 GB  89.79 s
+   1000   9.14 GB/s   1.12 MT/s  819 GB  89.64 s
+
+  Host hal
+  4  Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz
+  RAM 16314552 SWAP 17575928
+
+      0   8.11 GB/s   0.99 MT/s  819 GB  101.04 s
+      1   7.13 GB/s   0.87 MT/s  819 GB  114.92 s
+      2   7.06 GB/s   0.86 MT/s  819 GB  116.11 s
+      4   6.59 GB/s   0.80 MT/s  819 GB  124.29 s
+     10   3.11 GB/s   0.38 MT/s  819 GB  263.57 s
+    100   2.76 GB/s   0.34 MT/s  819 GB  297.26 s
+    200   2.97 GB/s   0.36 MT/s  819 GB  275.59 s
+    500   2.76 GB/s   0.34 MT/s  819 GB  296.81 s
+   1000   2.72 GB/s   0.33 MT/s  819 GB  300.84 s
+
+  Host hierocles.phy.bnl.gov
+  40  Intel(R) Xeon(R) CPU E5-2630 v4 @ 2.20GHz
+  RAM 65846544 SWAP 66981884
+
+      0   4.44 GB/s   0.54 MT/s  819 GB  184.51 s
+      1   5.09 GB/s   0.62 MT/s  819 GB  160.94 s
+      2   5.14 GB/s   0.63 MT/s  819 GB  159.49 s
+      4   5.34 GB/s   0.65 MT/s  819 GB  153.31 s
+     10   5.09 GB/s   0.62 MT/s  819 GB  160.97 s
+    100   5.23 GB/s   0.64 MT/s  819 GB  156.76 s
+    200   5.28 GB/s   0.64 MT/s  819 GB  155.08 s
+    500   5.16 GB/s   0.63 MT/s  819 GB  158.80 s
+   1000   5.09 GB/s   0.62 MT/s  819 GB  160.88 s
+
+  Host hothstor2.phy.bnl.gov
+  8  Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz
+  RAM 32808364 SWAP 33414140
+
+      0  16.01 GB/s   1.95 MT/s  819 GB  51.18 s
+      1  19.71 GB/s   2.41 MT/s  819 GB  41.57 s
+      2  16.21 GB/s   1.98 MT/s  819 GB  50.53 s
+      4  17.49 GB/s   2.14 MT/s  819 GB  46.84 s
+     10  14.87 GB/s   1.82 MT/s  819 GB  55.10 s
+    100  15.55 GB/s   1.90 MT/s  819 GB  52.68 s
+    200  14.27 GB/s   1.74 MT/s  819 GB  57.40 s
+    500  14.26 GB/s   1.74 MT/s  819 GB  57.45 s
+   1000  14.24 GB/s   1.74 MT/s  819 GB  57.51 s
+#+END_EXAMPLE
+
+Host specs:
 
 - hal :: Ubuntu 17.04, thinkpad T520, 16GB DDR3 1600 (12 GB/s theoretical max), i5-2520M 2.5GHz. Cache: 64kB/256kB/3072kB.
 - haiku :: Ubuntu 16.04, desktop, 16 GB DDR3 1333 (10.7 GB/s max), 17-4770k 3.5GHz.  Cache: 256kB/1024kB/8192kB.
@@ -103,3 +162,4 @@ The [[./bigarray.cpp]] and [[./test_nparray.cpp]] tests do some dumb-simple thin
 Some results on hierocles:
 
  - bigarray :: 
+

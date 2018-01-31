@@ -34,6 +34,8 @@ class RingBufferSPSCLockFree2
 {
 public:
 
+    typedef T element_type;
+
     explicit RingBufferSPSCLockFree2(std::size_t capacity)
         : m_mask{make_mask(capacity)}
         , m_capacity{m_mask+1}

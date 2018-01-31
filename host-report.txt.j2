@@ -1,0 +1,18 @@
+{% for host in hosts -%}
+{% set info = host.info -%}
+{% set res = host.results -%}
+
+Host {{ info.host }}
+{{ info.ncpus }} {{ info.cpu }}
+RAM {{ info.memory }} SWAP {{ info.swap }}
+
+{% for ta in res.test_arene -%}
+{{ "%5d %6.2f GB/s %6.2f MT/s  %.0f GB  %.2f s"|format(
+   ta.params.latency,
+   ta.results.volume/ta.results.wall/10.0**9,
+   ta.params.nticks/ta.results.wall/10.0**6,
+   ta.results.volume/10.0**9,
+   ta.results.wall
+   ) }}
+{% endfor %}
+{% endfor -%}
